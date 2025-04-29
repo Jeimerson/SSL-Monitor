@@ -12,7 +12,7 @@ set -euo pipefail
 host="$(hostname -f)"
 bin="/usr/local/hestia/bin"
 hestia_conf="/usr/local/hestia/conf/hestia.conf"
-output_file="/home/bpgr/web/sslmonitor.bytespulse.com/private/domains.list"
+output_file="/home/YOURUSER/web/YOURDOMAIN/private/domains.list"
 temp_file="$(mktemp)"
 auto_file="$(mktemp)"
 manual_file="$(mktemp)"
@@ -113,8 +113,8 @@ for f in "${del_files[@]}"; do
     [[ -f "$f" ]] && rm -f "$f"
 done
 
-sudo chown bpgr:bpgr /home/bpgr/web/sslmonitor.bytespulse.com/private/domains.list
-sudo chmod 664 /home/bpgr/web/sslmonitor.bytespulse.com/private/domains.list
+sudo chown YOURUSER:YOURUSER /home/YOURUSER/web/YOURDOMAIN/private/domains.list
+sudo chmod 664 /home/YOURUSER/web/YOURDOMAIN/private/domains.list
 
 # Treats unset variables as an error and causes a pipeline to fail if any command in it fails.
 set -uo pipefail
