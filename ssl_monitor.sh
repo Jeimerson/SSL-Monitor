@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Script Name: cert_watch
 # Version: 1.1.3
-# Author: BytesPulse
+# Author: BytesPulse & sashanu
 # Release Date: 2025-April-28
 # Description: Script to check SSL/TLS certificates
 # shellcheck disable=SC2317,SC2016,SC2004
