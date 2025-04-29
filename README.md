@@ -150,13 +150,13 @@ EXPIRED=$(echo "$OUTPUT" | jq -r '.[] | select(.status | test("expired|error"; "
 if [[ -n "$EXPIRED" ]]; then
     echo -e "Τα παρακάτω domains έχουν πρόβλημα ή έχουν λήξει:\n$EXPIRED" | mail -s "SSL Monitor Alert" info@yourdomain.com
 fi
-
+```
 ---
 
 ### 🖥️ AIO cronjob για αυτόματη ενημέρωση της λίστας καθώς και ειδπποίησης μέσω email για ληγμένα πιστοποιητικά SSL (every day at 03:00)
 ```bash
 0 3 * * * sudo /home/YOURUSER/web/YOURDOMAIN/private/ssl_monitor -f /home/YOURUSER/web/YOURDOMAIN/private/domains.list -j 2>/dev/null | grep -A10000 '^\[' | sudo tee /home/YOURUSER/web/YOURDOMAIN/private/cert_status.json > /dev/null && /home/YOURUSER/web/YOURDOMAIN/private/check_expiry
-
+```
 ---
 
 📌 **Τελευταία ενημέρωση: 30/04/2025
