@@ -74,7 +74,7 @@ fi
 ```
 ### 🖥️ AIO cronjob to get new list and notify by email for every expired ssl(every day at 03:00)
 ```bash
-0 3 * * * sudo /home/YOURUSER/web/YOURDOMAIN/private/ssl_monitor -f /home/YOURUSER/web/YOURDOMAIN/private/domains.list -j 2>/dev/null | grep -A10000 '^\[' | sudo tee /home/YOURUSER/web/YOURDOMAIN/private/cert_status.json > /dev/null && /home/YOURUSER/web/YOURDOMAIN/private/check_expiry
+0 3 * * * sudo /home/YOURUSER/web/YOURDOMAIN/private/ssl_monitor -f /home/YOURUSER/web/YOURDOMAIN/private/domains.list -j 2>/dev/null | grep -F -A10000 '[' | sudo tee /home/YOURUSER/web/YOURDOMAIN/private/cert_status.json > /dev/null && /home/YOURUSER/web/YOURDOMAIN/private/check_expiry
 ```
 ---
 
@@ -160,13 +160,19 @@ fi
 
 ### 🖥️ AIO cronjob για αυτόματη ενημέρωση της λίστας καθώς και ειδπποίησης μέσω email για ληγμένα πιστοποιητικά SSL (every day at 03:00)
 ```bash
-0 3 * * * sudo /home/YOURUSER/web/YOURDOMAIN/private/ssl_monitor -f /home/YOURUSER/web/YOURDOMAIN/private/domains.list -j 2>/dev/null | grep -A10000 '^\[' | sudo tee /home/YOURUSER/web/YOURDOMAIN/private/cert_status.json > /dev/null && /home/YOURUSER/web/YOURDOMAIN/private/check_expiry
+0 3 * * * sudo /home/YOURUSER/web/YOURDOMAIN/private/ssl_monitor -f /home/YOURUSER/web/YOURDOMAIN/private/domains.list -j 2>/dev/null | grep -F -A10000 '[' | sudo tee /home/YOURUSER/web/YOURDOMAIN/private/cert_status.json > /dev/null && /home/YOURUSER/web/YOURDOMAIN/private/check_expiry
 ```
 ---
 
 #### 🌟 Credits
 
 Μεγάλο ευχαριστώ στον [sahsanu](https://github.com/sahsanu) για την έμπνευση και το μεγαλύτερο μέρος του Bash script — η δουλειά του αποτέλεσε τη βάση αυτού του έργου.
+
+---
+
+#### P.S. It works with HestiaCP but it can work everywhere with the correct changes.
+
+---
 
 ---
 
