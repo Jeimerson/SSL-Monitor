@@ -78,7 +78,7 @@ fi
 ```
 ---
 
-#### Credits
+#### 🌟 Credits
 
 A big thanks to [sahsanu](https://github.com/sahsanu) for the inspiration and the majority of the Bash script — his work formed the foundation of this project.
 
@@ -164,7 +164,7 @@ fi
 ```
 ---
 
-#### Credits
+#### 🌟 Credits
 
 Μεγάλο ευχαριστώ στον [sahsanu](https://github.com/sahsanu) για την έμπνευση και το μεγαλύτερο μέρος του Bash script — η δουλειά του αποτέλεσε τη βάση αυτού του έργου.
 
