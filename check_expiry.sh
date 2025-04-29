@@ -1,7 +1,7 @@
 #!/bin/bash
 
-json_file="/home/bpgr/web/certwatch.bytespulse.com/private/cert_status.json"
-recipient="info@bytespulse.com"
+json_file="/home/YOURUSER/web/YOURDOMAIN/private/cert_status.json"
+recipient="info@yourdomain.com"
 
 # Βρες domains με status != "Valid"
 expired=$(jq -r '.[] | select(.status != "Valid") | "\(.domain) - Status: \(.status) (expires in \(.days_left) days)"' "$json_file")
