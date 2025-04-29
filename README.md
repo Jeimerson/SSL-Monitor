@@ -156,7 +156,6 @@ fi
 ### 🖥️ AIO cronjob για αυτόματη ενημέρωση της λίστας καθώς και ειδπποίησης μέσω email για ληγμένα πιστοποιητικά SSL (every day at 03:00)
 ```bash
 0 3 * * * sudo /home/YOURUSER/web/YOURDOMAIN/private/ssl_monitor -f /home/YOURUSER/web/YOURDOMAIN/private/domains.list -j 2>/dev/null | grep -A10000 '^\[' | sudo tee /home/YOURUSER/web/YOURDOMAIN/private/cert_status.json > /dev/null && /home/YOURUSER/web/YOURDOMAIN/private/check_expiry
-```
 
 ---
 
