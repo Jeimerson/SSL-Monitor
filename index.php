@@ -9,7 +9,6 @@ define('LOGIN_USER', 'admin');
 define('LOGIN_PASS', 'admin');
 define('SESSION_TIMEOUT', 900); // 15 λεπτά
 
-$host = gethostname();
 $is_logged_in = isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true;
 
 // === SESSION TIMEOUT ===
@@ -63,7 +62,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
     } elseif (!is_numeric($port)) {
         $response['message'] = 'Invalid port.';
     } else {
-        $new_line = "$host;$domain;$port;# AddedByUser";
+        $new_line = "$server;$domain;$port;# AddedByUser";
         $fp = fopen(DOMAINS_LIST, 'c+');
         if (flock($fp, LOCK_EX)) {
             $lines = [];
