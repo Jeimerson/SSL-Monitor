@@ -16,8 +16,8 @@
   ├── style.css
   ├── script.js
 /private/
-  ├── ssl_monitor
-  ├── check_expiry
+  ├── ssl_monitor.sh
+  ├── check_expiry.sh
   ├── domains.list (auto generated)
   ├── cert_status.json (auto generated)
 ```
@@ -38,10 +38,10 @@
 - Click `❌ Delete` on the domain list.
 
 ### 📋 Run SSL Check
-- A cronjob runs `ssl_monitor` daily and saves output to `cert_status.json`.
+- A cronjob runs `ssl_monitor.sh` daily and saves output to `cert_status.json`.
 - You can manually run:
 ```bash
-sudo /path/to/ssl_monitor -f domains.list -j > cert_status.json
+sudo /path/to/ssl_monitor.sh -f domains.list -j > cert_status.json
 ```
 
 ### 📊 View Interface
@@ -53,19 +53,19 @@ sudo /path/to/ssl_monitor -f domains.list -j > cert_status.json
 ## 📬 Email Notification Script
 
 ### 🔧 Setup
-1. Create a script file, e.g. `check_expiry` with executable permissions.
-2. Content should run `ssl_monitor` in JSON mode and parse expired or error certs.
+1. Create a script file, e.g. `check_expiry.sh` with executable permissions.
+2. Content should run `ssl_monitor.sh` in JSON mode and parse expired or error certs.
 3. If any are found, send an email to your chosen address.
 
 ### 🖥️ Example cronjob (every day at 03:00)
 ```bash
-0 3 * * * /path/to/check_expiry
+0 3 * * * /path/to/check_expiry.sh
 ```
 
 ### 📨 Example email script (simplified)
 ```bash
 #!/bin/bash
-OUTPUT=$(sudo /path/to/ssl_monitor -f /path/to/domains.list -j)
+OUTPUT=$(sudo /path/to/ssl_monitor.sh -f /path/to/domains.list -j)
 EXPIRED=$(echo "$OUTPUT" | jq -r '.[] | select(.status | test("expired|error"; "i")) | .domain')
 
 if [[ -n "$EXPIRED" ]]; then
@@ -74,7 +74,7 @@ fi
 ```
 ### 🖥️ AIO cronjob to get new list and notify by email for every expired ssl(every day at 03:00)
 ```bash
-0 3 * * * sudo /home/YOURUSER/web/YOURDOMAIN/private/ssl_monitor -f /home/YOURUSER/web/YOURDOMAIN/private/domains.list -j 2>/dev/null | grep -F -A10000 '[' | sudo tee /home/YOURUSER/web/YOURDOMAIN/private/cert_status.json > /dev/null && /home/YOURUSER/web/YOURDOMAIN/private/check_expiry
+0 3 * * * sudo /home/YOURUSER/web/YOURDOMAIN/private/ssl_monitor.sh -f /home/YOURUSER/web/YOURDOMAIN/private/domains.list -j 2>/dev/null | grep -F -A10000 '[' | sudo tee /home/YOURUSER/web/YOURDOMAIN/private/cert_status.json > /dev/null && /home/YOURUSER/web/YOURDOMAIN/private/check_expiry.sh
 ```
 ---
 
@@ -100,8 +100,8 @@ A big thanks to [sahsanu](https://github.com/sahsanu) for the inspiration and th
   ├── style.css
   ├── script.js
 /private/
-  ├── ssl_monitor
-  ├── check_expiry
+  ├── ssl_monitor.sh
+  ├── check_expiry.sh
   ├── domains.list (αυτόματη δημιουργία)
   ├── cert_status.json (αυτόματη δημιουργία)
 ```
@@ -122,10 +122,10 @@ A big thanks to [sahsanu](https://github.com/sahsanu) for the inspiration and th
 - Πατήστε `❌ Delete` στη λίστα.
 
 ### 📋 Έλεγχος SSL χειροκίνητα
-- Ένα cronjob εκτελεί κάθε μέρα το `ssl_monitor` και αποθηκεύει το json.
+- Ένα cronjob εκτελεί κάθε μέρα το `ssl_monitor.sh` και αποθηκεύει το json.
 - Μπορείτε και χειροκίνητα:
 ```bash
-sudo /path/to/ssl_monitor -f domains.list -j > cert_status.json
+sudo /path/to/ssl_monitor.sh -f domains.list -j > cert_status.json
 ```
 
 ### 📊 Περιβάλλον Web
@@ -137,19 +137,19 @@ sudo /path/to/ssl_monitor -f domains.list -j > cert_status.json
 ## 📬 Script Ειδοποίησης μέσω Email
 
 ### 🔧 Ρύθμιση (GR)
-1. Δημιουργήστε ένα bash script, π.χ. `check_expiry` με δικαιώματα εκτέλεσης.
-2. Το script εκτελεί το `ssl_monitor` σε JSON mode και ελέγχει για expired/error.
+1. Δημιουργήστε ένα bash script, π.χ. `check_expiry.sh` με δικαιώματα εκτέλεσης.
+2. Το script εκτελεί το `ssl_monitor.sh` σε JSON mode και ελέγχει για expired/error.
 3. Αν βρει κάποιο, στέλνει email σε προκαθορισμένο email.
 
 ### 🖥️ Παράδειγμα cronjob (κάθε μέρα στις 03:00)
 ```bash
-0 3 * * * /path/to/check_expiry
+0 3 * * * /path/to/check_expiry.sh
 ```
 
 ### 📨 Παράδειγμα script email (απλό)
 ```bash
 #!/bin/bash
-OUTPUT=$(sudo /path/to/ssl_monitor -f /path/to/domains.list -j)
+OUTPUT=$(sudo /path/to/ssl_monitor.sh -f /path/to/domains.list -j)
 EXPIRED=$(echo "$OUTPUT" | jq -r '.[] | select(.status | test("expired|error"; "i")) | .domain')
 
 if [[ -n "$EXPIRED" ]]; then
@@ -160,7 +160,7 @@ fi
 
 ### 🖥️ AIO cronjob για αυτόματη ενημέρωση της λίστας καθώς και ειδπποίησης μέσω email για ληγμένα πιστοποιητικά SSL (every day at 03:00)
 ```bash
-0 3 * * * sudo /home/YOURUSER/web/YOURDOMAIN/private/ssl_monitor -f /home/YOURUSER/web/YOURDOMAIN/private/domains.list -j 2>/dev/null | grep -F -A10000 '[' | sudo tee /home/YOURUSER/web/YOURDOMAIN/private/cert_status.json > /dev/null && /home/YOURUSER/web/YOURDOMAIN/private/check_expiry
+0 3 * * * sudo /home/YOURUSER/web/YOURDOMAIN/private/ssl_monitor.sh -f /home/YOURUSER/web/YOURDOMAIN/private/domains.list -j 2>/dev/null | grep -F -A10000 '[' | sudo tee /home/YOURUSER/web/YOURDOMAIN/private/cert_status.json > /dev/null && /home/YOURUSER/web/YOURDOMAIN/private/check_expiry.sh
 ```
 ---
 
