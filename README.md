@@ -9,33 +9,45 @@
    - `domains.list` to be writable by the web user (e.g., `www-data` or Hestia user).
    - `cert_status.json` to be readable by PHP.
 
+> ℹ️ The folder `/private/` is an example path for storing your shell scripts and generated files. You can define your own path via the **Settings** menu.
+
 ### 📂 File Structure
 ```
 /public_html/
   ├── index.php
   ├── style.css
   ├── script.js
-/private/
+/private/ (or your custom path)
   ├── ssl_monitor.sh
   ├── check_expiry.sh
   ├── domains.list (auto generated)
   ├── cert_status.json (auto generated)
+  ├── config.php
 ```
 
 ### 🔐 Login
 - Default credentials:
   - Username: `admin`
   - Password: `admin`
-- These are stored in `index.php` (edit `LOGIN_USER` and `LOGIN_PASS`).
+- Stored in `config.php` (`LOGIN_USER`, `LOGIN_PASS`)
+- Guests no longer see domain data — only the login screen is shown.
 
 ### ➕ Add Domain (as logged-in user)
-- Fill: `Server`, `Domain`, `Port` (default: 443).
+- Fill: `Server`, `Domain`, `Port`
+- Use the dropdown to select type: **https**, **smtp**, **imap**, **pop3** — the correct port is auto-filled.
 - Click `Add Domain`.
-- The domain is saved in `domains.list` with `# AddedByUser` flag.
+- Entry is saved in `domains.list` with `# AddedByUser`.
 
 ### ❌ Delete Domain
 - Only user-added domains (`# AddedByUser`) can be removed.
 - Click `❌ Delete` on the domain list.
+
+### ⚙️ Settings Panel
+Click the **Settings** button (top-right) to easily:
+- Change **login username & password**
+- Set the **script path** (e.g., `/private/ssl_monitor.sh`)
+- Configure your **API key**
+- Changes are saved to `config.php`.
 
 ### 📋 Run SSL Check
 - A cronjob runs `ssl_monitor.sh` daily and saves output to `cert_status.json`.
@@ -44,11 +56,24 @@
 sudo /path/to/ssl_monitor.sh -f domains.list -j > cert_status.json
 ```
 
+ℹ️ If you're using a control panel other than HestiaCP:
+- Edit `ssl_monitor.sh` and update:
+```bash
+bin="/usr/local/hestia/bin"
+hestia_conf="/usr/local/hestia/conf/hestia.conf"
+```
+- These paths must reflect your control panel or system setup.
+
 ### 📊 View Interface
-- See grouped domains (by server)
-- Filter by: All / Expired / Warning / Domains / IMAP/POP
-- Search bar and pagination available
-- Toggle: `Show All Details`, `Group By Server`
+- Color-coded domains:
+  - 🔴 **Red**: Expired or with Errors (shown first)
+  - 🟡 **Yellow**: Expires in ≤15 days
+  - 🟢 **Green**: Valid SSL
+- Errors show the message, e.g. `Error (Could not get certificate information)`
+- Filtering: All / Expired / Warning / Domains / IMAP/POP
+- Search bar
+- Pagination controls:
+  - Results per page: 20 (default), 50, 100, All
 
 ## 📬 Email Notification Script
 
@@ -56,6 +81,11 @@ sudo /path/to/ssl_monitor.sh -f domains.list -j > cert_status.json
 1. Create a script file, e.g. `check_expiry.sh` with executable permissions.
 2. Content should run `ssl_monitor.sh` in JSON mode and parse expired or error certs.
 3. If any are found, send an email to your chosen address.
+
+ℹ️ In `check_expiry.sh`, set your actual email address:
+```bash
+EMAIL="info@domain.com"
+```
 
 ### 🖥️ Example cronjob (every day at 03:00)
 ```bash
@@ -72,10 +102,12 @@ if [[ -n "$EXPIRED" ]]; then
     echo -e "The following domains are expired or have issues:\n$EXPIRED" | mail -s "SSL Monitor Alert" info@yourdomain.com
 fi
 ```
-### 🖥️ AIO cronjob to get new list and notify by email for every expired ssl(every day at 03:00)
+
+### 🖥️ AIO cronjob to get new list and notify by email for every expired ssl (every day at 03:00)
 ```bash
 0 3 * * * sudo /home/YOURUSER/web/YOURDOMAIN/private/ssl_monitor.sh -f /home/YOURUSER/web/YOURDOMAIN/private/domains.list -j 2>/dev/null | grep -F -A10000 '[' | sudo tee /home/YOURUSER/web/YOURDOMAIN/private/cert_status.json > /dev/null && /home/YOURUSER/web/YOURDOMAIN/private/check_expiry.sh
 ```
+
 ---
 
 #### 🌟 Credits
@@ -93,33 +125,45 @@ A big thanks to [sahsanu](https://github.com/sahsanu) for the inspiration and th
    - Το `domains.list` πρέπει να είναι εγγράψιμο από τον web χρήστη.
    - Το `cert_status.json` πρέπει να είναι αναγνώσιμο από PHP.
 
+> ℹ️ Ο φάκελος `/private/` είναι ενδεικτικός. Μπορείτε να επιλέξετε οποιοδήποτε path για τα script & δεδομένα — ορίζεται μέσα από το μενού **Settings**.
+
 ### 📂 Δομή φακέλων
 ```
 /public_html/
   ├── index.php
   ├── style.css
   ├── script.js
-/private/
+/private/ (ή οποιοδήποτε path επιλέξετε)
   ├── ssl_monitor.sh
   ├── check_expiry.sh
   ├── domains.list (αυτόματη δημιουργία)
   ├── cert_status.json (αυτόματη δημιουργία)
+  ├── config.php
 ```
 
 ### 🔐 Σύνδεση
 - Default στοιχεία:
   - Χρήστης: `admin`
   - Κωδικός: `admin`
-- Τα αλλάζετε στο `index.php` (μεταβλητές `LOGIN_USER`, `LOGIN_PASS`).
+- Αλλάζουν μέσα στο `config.php` (`LOGIN_USER`, `LOGIN_PASS`)
+- Οι επισκέπτες δεν βλέπουν τη λίστα domain — εμφανίζεται μόνο η φόρμα login.
 
-### ➕ Προσθήκη Domain (μόνο συνδεδεμένοι)
-- Συμπληρώστε: `Server`, `Domain`, `Port` (προεπιλογή: 443).
-- Πατήστε `Add Domain`.
-- Το domain καταχωρείται στο `domains.list` με `# AddedByUser`.
+### ➕ Προσθήκη Domain
+- Συμπληρώστε: `Server`, `Domain`, `Port`
+- Επιλέξτε από dropdown: **https**, **smtp**, **imap**, **pop3** — το port ενημερώνεται αυτόματα.
+- Πατήστε `Add Domain` για αποθήκευση (σημειώνεται με `# AddedByUser`)
 
 ### ❌ Διαγραφή Domain
-- Γίνεται μόνο για domains που προστέθηκαν από χρήστες.
+- Γίνεται μόνο για όσα πρόσθεσε ο χρήστης.
 - Πατήστε `❌ Delete` στη λίστα.
+
+### ⚙️ Μενού Ρυθμίσεων (Settings)
+Από το κουμπί **Settings** (επάνω δεξιά) μπορείτε να:
+- Αλλάξετε **όνομα χρήστη και κωδικό**
+- Ορίσετε νέο **μονοπάτι script**
+- Περάσετε **API key**
+
+Όλα αποθηκεύονται στο `config.php`.
 
 ### 📋 Έλεγχος SSL χειροκίνητα
 - Ένα cronjob εκτελεί κάθε μέρα το `ssl_monitor.sh` και αποθηκεύει το json.
@@ -127,6 +171,14 @@ A big thanks to [sahsanu](https://github.com/sahsanu) for the inspiration and th
 ```bash
 sudo /path/to/ssl_monitor.sh -f domains.list -j > cert_status.json
 ```
+
+ℹ️ Αν χρησιμοποιείτε άλλο control panel εκτός του HestiaCP:
+- Ανοίξτε το `ssl_monitor.sh` και τροποποιήστε:
+```bash
+bin="/usr/local/hestia/bin"
+hestia_conf="/usr/local/hestia/conf/hestia.conf"
+```
+- Οι διαδρομές πρέπει να προσαρμοστούν στο δικό σας σύστημα.
 
 ### 📊 Περιβάλλον Web
 - Προβολή grouped (ανά server)
@@ -176,6 +228,6 @@ fi
 
 ---
 
-📌 **Τελευταία ενημέρωση: 30/04/2025
+📌 **Τελευταία ενημέρωση: 04/05/2025
 
 ---
