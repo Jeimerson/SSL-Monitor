@@ -1,8 +1,10 @@
 #!/bin/bash
 
 # === CONFIGURATION ===
-SSL_MONITOR="/home/YOURUSER/web/YOURDOMAIN/private/ssl_monitor"
-DOMAINS_LIST="/home/YOURUSER/web/YOURDOMAIN/private/domains.list"
+# Find directory of the script
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SSL_MONITOR="$script_dir/ssl_monitor.sh"
+DOMAINS_LIST="$script_dir/domains.list"
 EMAIL="info@domain.com"
 
 # === Prevent cron from sending emails on standard output or errors
