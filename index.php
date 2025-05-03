@@ -2,13 +2,10 @@
 session_start();
 
 // === CONFIGURATION ===
-define('API_KEY', 'YOURAPIKEY(whatever)');
-define('DOMAINS_LIST', '/home/YOURUSER/web/YOURDOMAIN/private/domains.list');
-define('CERT_STATUS_JSON', '/home/YOURUSER/web/YOURDOMAIN/private/cert_status.json');
-define('LOGIN_USER', 'admin');
-define('LOGIN_PASS', 'admin');
-define('SESSION_TIMEOUT', 900); // 15 λεπτά
+define('CONFIG_FILE', __DIR__ . '/config.php');
+require_once __DIR__ . '/config.php';
 
+//$host = gethostname();
 $is_logged_in = isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true;
 
 // === SESSION TIMEOUT ===
@@ -47,15 +44,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
     header('Content-Type: application/json');
     $response = ['success' => false, 'message' => '', 'domains' => []];
 
-    $user_key = $_POST['api_key'] ?? '';
-    $server = trim($_POST['server'] ?? '');
-    $domain = trim($_POST['domain'] ?? '');
-    $port = trim($_POST['port'] ?? '443');
     $action = $_POST['action'] ?? '';
+    $user_key = $_POST['api_key'] ?? '';
 
     if ($user_key !== API_KEY || !$is_logged_in) {
         $response['message'] = 'Unauthorized.';
-    } elseif (!in_array($action, ['add', 'delete'])) {
+        echo json_encode($response);
+        exit;
+    }
+
+    // === HANDLE SETTINGS SAVE ===
+    if ($action === 'save_settings') {
+        $config_values = [
+            'API_KEY' => $_POST['API_KEY'] ?? '',
+            'DOMAINS_LIST' => $_POST['DOMAINS_LIST'] ?? '',
+            'CERT_STATUS_JSON' => $_POST['CERT_STATUS_JSON'] ?? '',
+            'LOGIN_USER' => $_POST['LOGIN_USER'] ?? '',
+            'LOGIN_PASS' => $_POST['LOGIN_PASS'] ?? '',
+            'SESSION_TIMEOUT' => $_POST['SESSION_TIMEOUT'] ?? 900,
+        ];
+
+        $lines = [];
+        foreach ($config_values as $key => $value) {
+            $escaped = addslashes($value);
+            $lines[] = "define('$key', '$escaped');";
+        }
+
+        $config_php = "<?php\n" . implode("\n", $lines) . "\n";
+        $result = file_put_contents(__DIR__ . '/config.php', $config_php);
+
+        if ($result !== false) {
+            $response['success'] = true;
+            $response['message'] = 'Settings saved successfully.';
+        } else {
+            $response['message'] = 'Failed to write config file.';
+        }
+
+        echo json_encode($response);
+        exit;
+    }
+
+    // === HANDLE DOMAIN ADD/DELETE ===
+    $server = trim($_POST['server'] ?? '');
+    $domain = trim($_POST['domain'] ?? '');
+    $port = trim($_POST['port'] ?? '443');
+
+    if (!in_array($action, ['add', 'delete'])) {
         $response['message'] = 'Invalid action.';
     } elseif (empty($domain)) {
         $response['message'] = 'Domain is required.';
@@ -120,6 +154,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['fetch_domains'])) {
     exit;
 }
 
+// === FETCH SETTINGS ===
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['get_settings'])) {
+    header('Content-Type: application/json');
+    echo json_encode([
+        'API_KEY' => defined('API_KEY') ? API_KEY : '',
+        'DOMAINS_LIST' => defined('DOMAINS_LIST') ? DOMAINS_LIST : '',
+        'CERT_STATUS_JSON' => defined('CERT_STATUS_JSON') ? CERT_STATUS_JSON : '',
+        'LOGIN_USER' => defined('LOGIN_USER') ? LOGIN_USER : '',
+        'LOGIN_PASS' => defined('LOGIN_PASS') ? LOGIN_PASS : '',
+        'SESSION_TIMEOUT' => defined('SESSION_TIMEOUT') ? SESSION_TIMEOUT : ''
+    ]);
+    exit;
+}
+
 // === FUNCTIONS ===
 function loadDomains() {
     $domains = [];
@@ -144,7 +192,7 @@ function loadCertStatus() {
                 $status_full = $item['status'] ?? '';
                 $days_left = null;
                 $status_simple = $status_full;
-
+                
                 if (preg_match('/expires in ([0-9]+) days/', $status_full, $matches)) {
                     $days_left = (int)$matches[1];
                     $status_simple = 'Valid';
@@ -154,6 +202,11 @@ function loadCertStatus() {
                 } else {
                     $days_left = -1;
                     $status_simple = 'Error';
+
+                // Append full message in parentheses if it's not empty
+                    if (!empty($status_full)) {
+                        $status_simple = 'Error<br><small>(' . htmlspecialchars($status_full) . ')</small>';
+                    }
                 }
 
                 $certs[] = [
@@ -180,14 +233,17 @@ function loadCertStatus() {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Manage SSL Monitoring Domains</title>
+    <title>SSL Monitor</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <div class="topbar">
     <h2>SSL Monitor</h2>
-    <button id="loginBtn">Login</button>
+    <div class="topbar-buttons">
+        <button id="settingsBtn" style="display:none;">⚙️ Settings</button>
+        <button id="loginBtn" style="display:none;"></button>
+    </div>
 </div>
 
 <div class="container" id="content">
@@ -195,8 +251,8 @@ function loadCertStatus() {
 </div>
 
 <script>
-window.API_KEY = <?php echo $is_logged_in ? json_encode(API_KEY) : 'null'; ?>;
-window.isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
+    window.API_KEY = <?php echo $is_logged_in ? json_encode(API_KEY) : 'null'; ?>;
+    window.isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
 </script>
 <script src="script.js"></script>
 
