@@ -1,15 +1,24 @@
-
 let domains = [];
 let certs = [];
 let currentPage = 1;
 let currentFilter = 'all';
-const itemsPerPage = 20;
+let itemsPerPageRaw = localStorage.getItem('itemsPerPage');
+let itemsPerPage = itemsPerPageRaw === 'All'
+    ? 9999
+    : parseInt(itemsPerPageRaw) || 20;
 let showDetails = localStorage.getItem('showDetails') === 'true';
 let groupByServer = localStorage.getItem('groupByServer') === 'true';
 
 document.addEventListener('DOMContentLoaded', () => {
     loadData();
     document.getElementById('loginBtn').addEventListener('click', toggleLoginForm);
+    const settingsBtn = document.getElementById('settingsBtn');
+    if (settingsBtn) {
+        settingsBtn.addEventListener('click', () => {
+            const panel = document.getElementById('settingsPanel');
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        });
+    }
 });
 
 function loadData() {
@@ -18,8 +27,14 @@ function loadData() {
         .then(data => {
             domains = data.domains || [];
             certs = data.certs || [];
-            renderContent();
             updateLoginButton(data.logged_in);
+            window.isLoggedIn = data.logged_in;
+
+            if (window.isLoggedIn) {
+                renderContent();
+            } else {
+                toggleLoginForm();
+            }
         })
         .catch(err => console.error('Error loading data:', err));
 }
@@ -31,9 +46,17 @@ function renderContent() {
     if (window.isLoggedIn) {
         html += `
             <form id="addDomainForm" onsubmit="addDomain(event)">
-                <input type="text" id="server" placeholder="Server (hostname or IP)" required>
-                <input type="text" id="domain" placeholder="Domain (e.g. www.example.com)" required>
-                <input type="text" id="port" value="443" placeholder="Port">
+                <input type="text" id="server" required placeholder="Server (hostname or IP)" required>
+                <input type="text" id="domain" required placeholder="Domain (e.g. www.example.com)" required>
+                <div class="port-wrapper">
+                    <input type="text" id="port" value="443" required placeholder="Port" oninput="syncPortInput()">
+                    <select id="portSelector" onchange="syncPortSelect()">
+                    <option value="443">443 (HTTPS)</option>
+                    <option value="465">465 (SMTP SSL)</option>
+                    <option value="993">993 (IMAP SSL)</option>
+                    <option value="995">995 (POP3 SSL)</option>
+                    </select>
+                </div>
                 <button type="submit" class="btn-add">➕ Add Domain</button>
             </form>
             <h4>My Domains:</h4>
@@ -61,12 +84,61 @@ function renderContent() {
             <button onclick="setFilter('domains')" id="tab-domains">Domains (0)</button>
             <button onclick="setFilter('imap')" id="tab-imap">IMAP/POP (0)</button>
         </div>
-        <input type="text" id="searchInput" placeholder="Search domains..." onkeyup="renderTable()">
+        <div class="controls">
+            <div class="search-wrapper">
+                <input type="text" id="searchInput" placeholder="Search domains..." onkeyup="renderTable()">
+            </div>
+            <div class="per-page-group">
+                <label for="itemsPerPageSelect"></label>
+                <select id="itemsPerPageSelect" onchange="changeItemsPerPage()">
+                    <option disabled selected>Show</option>
+                    <option value="20">20</option>
+                    <option value="50">50</option>
+                    <option value="100">100</option>
+                    <option value="All">All</option>
+                </select>
+            </div>
+        </div>
         <table>
             <thead id="table-head"></thead>
             <tbody id="certs-table-body"></tbody>
         </table>
         <div class="pagination" id="pagination"></div>
+    `;
+    
+    html += `
+        <div id="settingsModal" class="modal" style="display: none;">
+          <div class="modal-content">
+          <h3>Configuration Settings</h3>
+          <form id="settingsForm" onsubmit="saveSettings(event)">
+          <label>API Key</label>         
+          <input type="text" name="API_KEY" required placeholder="e.g. 123abcXYZ!@#">
+
+          <label>Path to domains.list</label>
+          <input type="text" name="DOMAINS_LIST" required placeholder="/home/YOURUSER/web/YOURDOMAIN/private/domains.list">
+
+          <label>Path to cert_status.json</label>
+          <input type="text" name="CERT_STATUS_JSON" required placeholder="/home/YOURUSER/web/YOURDOMAIN/private/cert_status.json">
+
+          <label>Login Username</label>
+          <input type="text" name="LOGIN_USER" required placeholder="e.g. admin">
+
+          <label>Login Password</label>
+          <div class="password-wrapper">
+          <input type="password" name="LOGIN_PASS" id="loginPassInput" required placeholder="e.g. MystrongPass@123">
+          <span class="toggle-eye" onclick="togglePasswordVisibility(this)">👁️</span>
+          </div>
+
+          <label>Session Timeout (seconds)</label>
+          <input type="number" name="SESSION_TIMEOUT" required placeholder="e.g. 900">
+
+          <div class="modal-actions">
+            <button type="submit" class="btn-add">💾 Save</button>
+            <button type="button" onclick="closeSettings()" class="btn-delete">Cancel</button>
+          </div>
+          </form>
+          </div>
+        </div>
     `;
 
     content.innerHTML = html;
@@ -111,7 +183,7 @@ function renderTable() {
 
     document.getElementById('tab-all').innerText = `All (${all})`;
     document.getElementById('tab-warning').innerText = `Warning (${warning})`;
-    document.getElementById('tab-expired').innerText = `Expired (${expired})`;
+    document.getElementById('tab-expired').innerText = `Error/Expired (${expired})`;
     document.getElementById('tab-domains').innerText = `Domains (${domainsCount})`;
     document.getElementById('tab-imap').innerText = `IMAP/POP (${imap})`;
 
@@ -163,6 +235,12 @@ function renderTable() {
     if (groupBtn) groupBtn.textContent = groupByServer ? 'Ungroup' : 'Group by Server';
 
     renderPagination(totalPages);
+    
+    const select = document.getElementById('itemsPerPageSelect');
+    if (select) {
+        const currentValue = localStorage.getItem('itemsPerPage') || '20';
+        select.value = currentValue;
+    }
 }
 
 function createRow(cert) {
@@ -206,7 +284,7 @@ function addDomain(e) {
     fetch('', {
         method: 'POST',
         body: new URLSearchParams({
-            api_key: window.API_KEY,
+            api_key: window.API_KEY || '',
             server: server,
             domain: domain,
             port: port,
@@ -312,7 +390,138 @@ function login(e) {
 }
 
 function updateLoginButton(isLogged) {
-    window.isLoggedIn = isLogged;
     const btn = document.getElementById('loginBtn');
-    btn.textContent = isLogged ? 'Logout' : 'Login';
+    const settingsBtn = document.getElementById('settingsBtn');
+    window.isLoggedIn = isLogged;
+
+    if (isLogged) {
+        btn.style.display = 'inline-block';
+        btn.textContent = '➡️ Logout';
+        if (settingsBtn) settingsBtn.style.display = 'inline-block';
+    } else {
+        btn.style.display = 'none';
+        if (settingsBtn) settingsBtn.style.display = 'none';
+    }
+}
+
+function changeItemsPerPage() {
+    const select = document.getElementById('itemsPerPageSelect');
+    const value = select.value;
+    localStorage.setItem('itemsPerPage', value);
+
+    if (value === 'All') {
+        itemsPerPage = 9999;
+    } else {
+        itemsPerPage = parseInt(value);
+    }
+
+    currentPage = 1;
+    renderTable();
+}
+
+function saveSettings(e) {
+    e.preventDefault();
+    const form = e.target;
+    const data = new FormData(form);
+
+    // Fallback in case window.API_KEY wasn't set properly
+    if (!window.API_KEY || window.API_KEY === 'null') {
+        console.warn('API_KEY fallback applied');
+        window.API_KEY = 'abc123'; // <-- βάλε εδώ το σωστό key αν κάνεις τοπικά dev
+    }
+
+    // Prepare POST data
+    const postData = new URLSearchParams([
+        ...data.entries(),
+        ['action', 'save_settings'],
+        ['api_key', window.API_KEY]
+    ]);
+
+    fetch('', {
+        method: 'POST',
+        body: postData
+    })
+    .then(response => response.json())
+    .then(res => {
+        if (res.success) {
+            showNotification('Settings saved!', false);
+            closeSettings(); // Hide modal
+        } else {
+            showNotification(res.message || 'Failed to save settings.', true);
+        }
+    })
+    .catch(err => {
+        console.error('Error saving settings:', err);
+        showNotification('Error communicating with server.', true);
+    });
+}
+
+document.getElementById('settingsBtn').addEventListener('click', () => {
+    document.getElementById('settingsModal').style.display = 'flex';
+    loadSettingsToForm();
+});
+
+function closeSettings() {
+    document.getElementById('settingsModal').style.display = 'none';
+}
+
+function loadSettingsToForm() {
+    fetch('?get_settings=1')
+        .then(res => res.json())
+        .then(config => {
+            const form = document.getElementById('settingsForm');
+            if (!form) return;
+
+            for (const key in config) {
+                if (form.elements[key]) {
+                    form.elements[key].value = config[key];
+                }
+            }
+        })
+        .catch(err => {
+            console.error('Failed to load settings:', err);
+            showNotification('Failed to load config settings.', true);
+        });
+}
+
+function togglePasswordVisibility(el) {
+    const input = document.getElementById('loginPassInput');
+    if (!input) return;
+
+    if (input.type === 'password') {
+        input.type = 'text';
+        el.textContent = '🙈';
+    } else {
+        input.type = 'password';
+        el.textContent = '👁️';
+    }
+}
+
+function syncPortSelect() {
+    const selector = document.getElementById('portSelector');
+    const portInput = document.getElementById('port');
+    if (selector && portInput) {
+        portInput.value = selector.value;
+    }
+}
+
+function syncPortInput() {
+    const portInput = document.getElementById('port');
+    const portSelector = document.getElementById('portSelector');
+    if (!portInput || !portSelector) return;
+
+    const value = portInput.value.trim();
+
+    let found = false;
+    for (const opt of portSelector.options) {
+        if (opt.value === value) {
+            portSelector.value = value;
+            found = true;
+            break;
+        }
+    }
+
+    if (!found) {
+        portSelector.value = ''; // deselect if not a known option
+    }
 }
