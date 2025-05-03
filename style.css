@@ -1,5 +1,3 @@
-
-/* General Layout */
 body {
     margin: 0;
     padding: 0;
@@ -10,7 +8,6 @@ body {
     flex-direction: column;
 }
 
-/* Topbar */
 .topbar {
     background-color: #1FB2EC;
     color: white;
@@ -25,6 +22,12 @@ body {
 
 .topbar h2 {
     margin: 0;
+}
+
+.topbar-buttons {
+    display: flex;
+    gap: 10px;
+    align-items: center;
 }
 
 .topbar button {
@@ -43,7 +46,6 @@ body {
     color: white;
 }
 
-/* Content Area */
 .container {
     margin: 30px auto;
     background: white;
@@ -55,7 +57,6 @@ body {
     text-align: center;
 }
 
-/* Login Form */
 #loginForm {
     display: flex;
     flex-direction: column;
@@ -91,7 +92,6 @@ body {
     transform: scale(1.05);
 }
 
-/* Add/Delete Domain Form */
 #addDomainForm {
     margin-bottom: 30px;
 }
@@ -103,7 +103,6 @@ body {
     padding: 12px;
 }
 
-/* Buttons */
 .btn-add {
     background-color: #4CAF50;
     color: white;
@@ -134,7 +133,6 @@ body {
     background-color: #e53935;
 }
 
-/* User Added Domains List */
 .user-domains {
     list-style: none;
     padding: 0;
@@ -151,7 +149,6 @@ body {
     align-items: center;
 }
 
-/* Message Alerts */
 .message {
     margin-top: 15px;
     padding: 15px;
@@ -172,7 +169,6 @@ body {
     border: 1px solid #f5c6cb;
 }
 
-/* Tables */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -193,7 +189,6 @@ th {
     font-weight: bold;
 }
 
-/* Certificate Status Styling */
 .valid {
     background-color: #e6ffed; /* Light green */
 }
@@ -206,7 +201,6 @@ th {
     background-color: #ffebee; /* Light red */
 }
 
-/* Search Input */
 #searchInput {
     width: 100%;
     max-width: 400px;
@@ -217,7 +211,6 @@ th {
     font-size: 16px;
 }
 
-/* Pagination */
 .pagination {
     margin-top: 20px;
     display: flex;
@@ -243,7 +236,6 @@ th {
     cursor: not-allowed;
 }
 
-/* Tabs */
 .tabs {
     margin: 20px 0;
     display: flex;
@@ -271,7 +263,6 @@ th {
     background: #ccc;
 }
 
-/* Options Buttons */
 .options {
     text-align: center;
     margin: 20px 10px;
@@ -296,7 +287,6 @@ th {
     background: #1976D2;
 }
 
-/* Server Group Header Row */
 tr td[colspan] {
     background: #f0f0f0;
     font-weight: bold;
@@ -304,7 +294,6 @@ tr td[colspan] {
     padding: 10px;
 }
 
-/* Notification Popup */
 #notification {
     position: fixed;
     top: 50%;
@@ -329,13 +318,6 @@ tr td[colspan] {
 
 #notification.error {
     background: #f44336;
-}
-
-/* Responsive */
-@media (max-width: 600px) {
-    .container {
-        padding: 20px;
-    }
 }
 
 #addDomainForm {
@@ -373,7 +355,154 @@ tr td[colspan] {
     background-color: #45a049;
 }
 
+.controls {
+    display: flex;
+    justify-content: flex-end;
+    margin-right: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.search-wrapper {
+    flex: 1;
+}
+
+#searchInput {
+    padding: 10px 12px;
+    font-size: 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    width: 290px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    margin-left: 110px;
+}
+
+.per-page-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.per-page-group label {
+    font-size: 15px;
+    color: #333;
+}
+
+.per-page-group label::after {
+    margin-left: 6px;
+}
+
+#itemsPerPageSelect {
+    padding: 8px 12px;
+    font-size: 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+}
+
+#itemsPerPageSelect option[value="Show"] {
+    font-weight: bold;
+}
+
+#searchInput,
+#itemsPerPageSelect {
+    box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.modal-content {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 0 15px rgba(0,0,0,0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.modal-content h3 {
+  margin-top: 0;
+  text-align: center;
+}
+
+.modal-content label {
+  font-weight: bold;
+  font-size: 14px;
+  text-align: left;
+}
+
+.modal-content input {
+  padding: 10px;
+  font-size: 15px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  width: 100%;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-wrapper input {
+  width: 100%;
+  padding-right: 40px;
+}
+
+.toggle-eye {
+  position: absolute;
+  right: 10px;
+  cursor: pointer;
+  font-size: 18px;
+  user-select: none;
+}
+
+.port-wrapper {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+#portSelector {
+  padding: 12px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  height: 45px;
+}
+
+/* Responsive */
 @media (max-width: 600px) {
+    .container {
+        padding: 20px;
+    }
+
     #addDomainForm {
         flex-direction: column;
         align-items: center;
@@ -381,6 +510,27 @@ tr td[colspan] {
 
     #addDomainForm input,
     #addDomainForm button {
+        width: 100%;
+        max-width: 400px;
+    }
+    
+    .per-page-group {
+        justify-content: center;
+        width: 100%;
+    }
+
+    .search-wrapper {
+        justify-content: center;
+        width: 100%;
+    }
+    
+    .controls {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .controls input,
+    .controls select {
         width: 100%;
         max-width: 400px;
     }
