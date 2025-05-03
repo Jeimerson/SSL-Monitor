@@ -1,18 +1,21 @@
 #!/usr/bin/env bash
-# Script Name: cert_watch
-# Version: 1.1.3
+# Script Name: SSL Monitor
+# Version: 2.0.1
 # Author: BytesPulse & sashanu
-# Release Date: 2025-April-28
+# Release Date: 2025-May-4
 # Description: Script to check SSL/TLS certificates
 # shellcheck disable=SC2317,SC2016,SC2004
 
 set -euo pipefail
 
+# Find directory of the script
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Config
 host="$(hostname -f)"
 bin="/usr/local/hestia/bin"
 hestia_conf="/usr/local/hestia/conf/hestia.conf"
-output_file="/home/YOURUSER/web/YOURDOMAIN/private/domains.list"
+output_file="$script_dir/domains.list"
 temp_file="$(mktemp)"
 auto_file="$(mktemp)"
 manual_file="$(mktemp)"
@@ -113,8 +116,9 @@ for f in "${del_files[@]}"; do
     [[ -f "$f" ]] && rm -f "$f"
 done
 
-sudo chown YOURUSER:YOURUSER /home/YOURUSER/web/YOURDOMAIN/private/domains.list
-sudo chmod 664 /home/YOURUSER/web/YOURDOMAIN/private/domains.list
+owner_user="${SUDO_USER:-root}"
+sudo chown "$owner_user:$owner_user" "$output_file"
+sudo chmod 664 "$output_file"
 
 # Treats unset variables as an error and causes a pipeline to fail if any command in it fails.
 set -uo pipefail
