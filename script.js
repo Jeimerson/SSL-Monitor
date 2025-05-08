@@ -16,9 +16,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (settingsBtn) {
         settingsBtn.addEventListener('click', () => {
             const panel = document.getElementById('settingsPanel');
-            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+            if (panel) panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
         });
     }
+});
+
+document.getElementById('settingsBtn').addEventListener('click', () => {
+    document.getElementById('settingsModal').style.display = 'flex';
+    loadSettingsToForm();
 });
 
 function loadData() {
@@ -111,9 +116,6 @@ function renderContent() {
           <div class="modal-content">
           <h3>Configuration Settings</h3>
           <form id="settingsForm" onsubmit="saveSettings(event)">
-          <label>API Key</label>         
-          <input type="text" name="API_KEY" required placeholder="e.g. 123abcXYZ!@#">
-
           <label>Path to domains.list</label>
           <input type="text" name="DOMAINS_LIST" required placeholder="/home/YOURUSER/web/YOURDOMAIN/private/domains.list">
 
@@ -284,10 +286,9 @@ function addDomain(e) {
     fetch('', {
         method: 'POST',
         body: new URLSearchParams({
-            api_key: window.API_KEY || '',
-            server: server,
-            domain: domain,
-            port: port,
+            server,
+            domain,
+            port,
             action: 'add'
         })
     })
@@ -299,7 +300,9 @@ function addDomain(e) {
             document.getElementById('domain').value = '';
             document.getElementById('port').value = '443';
             loadData();
-        } else showNotification(data.message, true);
+        } else {
+            showNotification(data.message, true);
+        }
     })
     .catch(err => {
         console.error('Error adding domain:', err);
@@ -309,11 +312,11 @@ function addDomain(e) {
 
 function deleteDomain(domain) {
     if (!confirm(`Are you sure you want to delete ${domain}?`)) return;
+
     fetch('', {
         method: 'POST',
         body: new URLSearchParams({
-            api_key: window.API_KEY,
-            domain: domain,
+            domain,
             action: 'delete'
         })
     })
@@ -322,7 +325,9 @@ function deleteDomain(domain) {
         if (data.success) {
             showNotification('Domain deleted successfully!', false);
             loadData();
-        } else showNotification(data.message, true);
+        } else {
+            showNotification(data.message, true);
+        }
     })
     .catch(err => {
         console.error('Error deleting domain:', err);
@@ -330,16 +335,48 @@ function deleteDomain(domain) {
     });
 }
 
-function showNotification(message, isError) {
-    let notification = document.getElementById('notification');
-    if (!notification) {
-        notification = document.createElement('div');
-        notification.id = 'notification';
-        document.body.appendChild(notification);
+function changeItemsPerPage() {
+    const select = document.getElementById('itemsPerPageSelect');
+    const value = select.value;
+    localStorage.setItem('itemsPerPage', value);
+
+    if (value === 'All') {
+        itemsPerPage = 9999;
+    } else {
+        itemsPerPage = parseInt(value);
     }
-    notification.className = isError ? 'show error' : 'show';
-    notification.textContent = message;
-    setTimeout(() => { notification.className = ''; }, 3000);
+
+    currentPage = 1;
+    renderTable();
+}
+
+function saveSettings(e) {
+    e.preventDefault();
+    const form = e.target;
+    const data = new FormData(form);
+
+    const postData = new URLSearchParams([
+        ...data.entries(),
+        ['action', 'save_settings']
+    ]);
+
+    fetch('', {
+        method: 'POST',
+        body: postData
+    })
+    .then(response => response.json())
+    .then(res => {
+        if (res.success) {
+            showNotification('Settings saved!', false);
+            closeSettings();
+        } else {
+            showNotification(res.message || 'Failed to save settings.', true);
+        }
+    })
+    .catch(err => {
+        console.error('Error saving settings:', err);
+        showNotification('Error communicating with server.', true);
+    });
 }
 
 function toggleLoginForm() {
@@ -348,7 +385,7 @@ function toggleLoginForm() {
         fetch('', {
             method: 'POST',
             body: new URLSearchParams({ logout: true })
-        }).then(r => r.json()).then(() => {
+        }).then(() => {
             window.isLoggedIn = false;
             loadData();
         });
@@ -372,8 +409,8 @@ function login(e) {
         method: 'POST',
         body: new URLSearchParams({
             login: true,
-            username: username,
-            password: password
+            username,
+            password
         })
     })
     .then(r => r.json())
@@ -381,7 +418,9 @@ function login(e) {
         if (data.success) {
             window.isLoggedIn = true;
             loadData();
-        } else showNotification(data.message, true);
+        } else {
+            showNotification(data.message, true);
+        }
     })
     .catch(err => {
         console.error('Error logging in:', err);
@@ -404,63 +443,6 @@ function updateLoginButton(isLogged) {
     }
 }
 
-function changeItemsPerPage() {
-    const select = document.getElementById('itemsPerPageSelect');
-    const value = select.value;
-    localStorage.setItem('itemsPerPage', value);
-
-    if (value === 'All') {
-        itemsPerPage = 9999;
-    } else {
-        itemsPerPage = parseInt(value);
-    }
-
-    currentPage = 1;
-    renderTable();
-}
-
-function saveSettings(e) {
-    e.preventDefault();
-    const form = e.target;
-    const data = new FormData(form);
-
-    // Fallback in case window.API_KEY wasn't set properly
-    if (!window.API_KEY || window.API_KEY === 'null') {
-        console.warn('API_KEY fallback applied');
-        window.API_KEY = 'abc123'; // <-- βάλε εδώ το σωστό key αν κάνεις τοπικά dev
-    }
-
-    // Prepare POST data
-    const postData = new URLSearchParams([
-        ...data.entries(),
-        ['action', 'save_settings'],
-        ['api_key', window.API_KEY]
-    ]);
-
-    fetch('', {
-        method: 'POST',
-        body: postData
-    })
-    .then(response => response.json())
-    .then(res => {
-        if (res.success) {
-            showNotification('Settings saved!', false);
-            closeSettings(); // Hide modal
-        } else {
-            showNotification(res.message || 'Failed to save settings.', true);
-        }
-    })
-    .catch(err => {
-        console.error('Error saving settings:', err);
-        showNotification('Error communicating with server.', true);
-    });
-}
-
-document.getElementById('settingsBtn').addEventListener('click', () => {
-    document.getElementById('settingsModal').style.display = 'flex';
-    loadSettingsToForm();
-});
-
 function closeSettings() {
     document.getElementById('settingsModal').style.display = 'none';
 }
@@ -471,7 +453,6 @@ function loadSettingsToForm() {
         .then(config => {
             const form = document.getElementById('settingsForm');
             if (!form) return;
-
             for (const key in config) {
                 if (form.elements[key]) {
                     form.elements[key].value = config[key];
@@ -483,6 +464,19 @@ function loadSettingsToForm() {
             showNotification('Failed to load config settings.', true);
         });
 }
+
+function showNotification(message, isError) {
+    let notification = document.getElementById('notification');
+    if (!notification) {
+        notification = document.createElement('div');
+        notification.id = 'notification';
+        document.body.appendChild(notification);
+    }
+    notification.className = isError ? 'show error' : 'show';
+    notification.textContent = message;
+    setTimeout(() => { notification.className = ''; }, 3000);
+}
+
 
 function togglePasswordVisibility(el) {
     const input = document.getElementById('loginPassInput');
@@ -524,4 +518,5 @@ function syncPortInput() {
     if (!found) {
         portSelector.value = ''; // deselect if not a known option
     }
+	
 }
