@@ -1,5 +1,4 @@
 <?php
-define('API_KEY', 'YOURAPIKEY(whatever)');
 define('DOMAINS_LIST', '/home/YOURUSER/web/YOURDOMAIN/private/domains.list');
 define('CERT_STATUS_JSON', '/home/YOURUSER/web/YOURDOMAIN/private/cert_status.json');
 define('LOGIN_USER', 'admin');
