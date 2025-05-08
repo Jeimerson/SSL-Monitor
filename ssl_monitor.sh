@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Script Name: SSL Monitor
-# Version: 2.0.1
+# Version: 2.2.4
 # Author: BytesPulse & sashanu
 # Release Date: 2025-May-4
 # Description: Script to check SSL/TLS certificates
@@ -116,8 +116,13 @@ for f in "${del_files[@]}"; do
     [[ -f "$f" ]] && rm -f "$f"
 done
 
-owner_user="${SUDO_USER:-root}"
-sudo chown "$owner_user:$owner_user" "$output_file"
+# Get the owner of the parent folder dynamically
+folder_path="$(dirname "$output_file")"
+owner_user=$(ls -ld "$folder_path" | awk '{print $3}')
+owner_group=$(ls -ld "$folder_path" | awk '{print $4}')
+
+# Set correct permissions
+sudo chown "$owner_user:$owner_group" "$output_file"
 sudo chmod 664 "$output_file"
 
 # Treats unset variables as an error and causes a pipeline to fail if any command in it fails.
