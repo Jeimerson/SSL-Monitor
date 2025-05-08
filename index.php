@@ -2,10 +2,8 @@
 session_start();
 
 // === CONFIGURATION ===
-define('CONFIG_FILE', __DIR__ . '/config.php');
 require_once __DIR__ . '/config.php';
 
-//$host = gethostname();
 $is_logged_in = isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true;
 
 // === SESSION TIMEOUT ===
@@ -40,23 +38,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['logout'])) {
 }
 
 // === HANDLE DOMAIN MANAGEMENT ===
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_POST['api_key'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     header('Content-Type: application/json');
     $response = ['success' => false, 'message' => '', 'domains' => []];
 
-    $action = $_POST['action'] ?? '';
-    $user_key = $_POST['api_key'] ?? '';
-
-    if ($user_key !== API_KEY || !$is_logged_in) {
+    if (!$is_logged_in) {
         $response['message'] = 'Unauthorized.';
         echo json_encode($response);
         exit;
     }
 
+    $action = $_POST['action'] ?? '';
+
     // === HANDLE SETTINGS SAVE ===
     if ($action === 'save_settings') {
         $config_values = [
-            'API_KEY' => $_POST['API_KEY'] ?? '',
             'DOMAINS_LIST' => $_POST['DOMAINS_LIST'] ?? '',
             'CERT_STATUS_JSON' => $_POST['CERT_STATUS_JSON'] ?? '',
             'LOGIN_USER' => $_POST['LOGIN_USER'] ?? '',
@@ -70,7 +66,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
             $lines[] = "define('$key', '$escaped');";
         }
 
-        $config_php = "<?php\n" . implode("\n", $lines) . "\n";
+        $config_php = "<?php
+" . implode("
+", $lines) . "
+";
         $result = file_put_contents(__DIR__ . '/config.php', $config_php);
 
         if ($result !== false) {
@@ -130,7 +129,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && isset($_
             if ($result) {
                 ftruncate($fp, 0);
                 rewind($fp);
-                fwrite($fp, implode("\n", $lines) . "\n");
+                fwrite($fp, implode("
+", $lines) . "
+");
                 $response['success'] = true;
             }
             flock($fp, LOCK_UN);
@@ -158,7 +159,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['fetch_domains'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['get_settings'])) {
     header('Content-Type: application/json');
     echo json_encode([
-        'API_KEY' => defined('API_KEY') ? API_KEY : '',
         'DOMAINS_LIST' => defined('DOMAINS_LIST') ? DOMAINS_LIST : '',
         'CERT_STATUS_JSON' => defined('CERT_STATUS_JSON') ? CERT_STATUS_JSON : '',
         'LOGIN_USER' => defined('LOGIN_USER') ? LOGIN_USER : '',
@@ -192,7 +192,7 @@ function loadCertStatus() {
                 $status_full = $item['status'] ?? '';
                 $days_left = null;
                 $status_simple = $status_full;
-                
+
                 if (preg_match('/expires in ([0-9]+) days/', $status_full, $matches)) {
                     $days_left = (int)$matches[1];
                     $status_simple = 'Valid';
@@ -202,8 +202,6 @@ function loadCertStatus() {
                 } else {
                     $days_left = -1;
                     $status_simple = 'Error';
-
-                // Append full message in parentheses if it's not empty
                     if (!empty($status_full)) {
                         $status_simple = 'Error<br><small>(' . htmlspecialchars($status_full) . ')</small>';
                     }
@@ -234,6 +232,7 @@ function loadCertStatus() {
 <head>
     <meta charset="UTF-8">
     <title>SSL Monitor</title>
+    <link rel="icon" type="image/x-icon" href="/images/ssl.png">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -251,7 +250,6 @@ function loadCertStatus() {
 </div>
 
 <script>
-    window.API_KEY = <?php echo $is_logged_in ? json_encode(API_KEY) : 'null'; ?>;
     window.isLoggedIn = <?php echo $is_logged_in ? 'true' : 'false'; ?>;
 </script>
 <script src="script.js"></script>
