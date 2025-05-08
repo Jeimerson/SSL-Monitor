@@ -2,7 +2,7 @@
 # Script Name: SSL Monitor
 # Version: 2.2.4
 # Author: BytesPulse & sashanu
-# Release Date: 2025-May-4
+# Release Date: 2025-May-9
 # Description: Script to check SSL/TLS certificates
 # shellcheck disable=SC2317,SC2016,SC2004
 
